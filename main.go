@@ -70,6 +70,7 @@ func main() {
 		return
 	}
 
+	loopCount := int64(0)
 	for true {
 	SaveDeliveryAddress:
 		fmt.Println("########## 切换购物车收货地址 ###########")
@@ -88,6 +89,7 @@ func main() {
 			goto StoreLoop
 		}
 
+		session.StoreList = make(map[string]dd.Store)
 		for index, store := range stores {
 			if _, ok := session.StoreList[store.StoreId]; !ok {
 				session.StoreList[store.StoreId] = store
@@ -97,6 +99,10 @@ func main() {
 	CartLoop:
 		fmt.Printf("########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05"))
 		err = session.CheckCart()
+		if err != nil {
+			fmt.Printf("%s", err)
+			goto StoreLoop
+		}
 		for _, v := range session.Cart.FloorInfoList {
 			if v.FloorId == session.Conf.FloorId {
 				session.GoodsList = make([]dd.Goods, 0)
@@ -147,20 +153,21 @@ func main() {
 			} else {
 				//无效商品
 				//for index, goods := range v.NormalGoodsList {
-				//	fmt.Printf("----[%v] %s 数量：%v 总价：%d\n", index, goods.SpuId, goods.StoreId, goods.Price)
+				//	fmt.Printf("----[%v] %s 数量：%v 总价：%d\n", index, goods.SpuId, goods.StoreId, goods.Price/100.0)
 				//}
 			}
 		}
 
 		for index, goods := range session.GoodsList {
-			fmt.Printf("[%v] %s 数量：%v 总价：%d\n", index, goods.GoodsName, goods.Quantity, goods.Price)
+			fmt.Printf("[%v] %s 数量：%v 总价：%d\n", index, goods.GoodsName, goods.Quantity, goods.Price/100.0)
 		}
 
 		if len(session.GoodsList) == 0 {
 			if err != nil {
 				fmt.Println(err)
 			} else {
-				fmt.Println("当前购物车中无有效商品")
+				fmt.Println("当前购物车中无有效商品 1s 后重试")
+				time.Sleep(1 * time.Second)
 			}
 			if errors.Is(err, dd.LimitedErr1) {
 				time.Sleep(1 * time.Second)
@@ -204,8 +211,8 @@ func main() {
 		fmt.Printf("########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05"))
 		err = session.CheckCapacity()
 		if err != nil {
-			fmt.Println(err)
-			time.Sleep(1 * time.Second)
+			fmt.Printf("获取配送时间出错: %v 500ms 后重试...\n", err)
+			time.Sleep(500 * time.Millisecond)
 			//刷新可用配送时间， 会出现“服务器正忙,请稍后再试”， 可以忽略。
 			goto CapacityLoop
 		}
@@ -229,7 +236,12 @@ func main() {
 				fmt.Printf("发现可用的配送时段::%s!\n", v.ArrivalTimeStr)
 			}
 		} else {
-			fmt.Println("当前无可用配送时间段")
+			loopCount++
+			if loopCount%600 == 0 {
+				fmt.Println("当前无可用配送时间段, 刷新商店信息后重试...")
+				goto StoreLoop
+			}
+			fmt.Println("当前无可用配送时间段 1s 后重试...")
 			time.Sleep(1 * time.Second)
 			goto CapacityLoop
 		}
@@ -266,7 +278,7 @@ func main() {
 					case dd.CloseOrderTimeExceptionErr, dd.DecreaseCapacityCountError, dd.NotDeliverCapCityErr:
 						delete(session.SettleDeliveryInfo, k)
 					default:
-						goto CapacityLoop
+						goto StoreLoop
 					}
 				}
 			}
