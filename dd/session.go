@@ -9,26 +9,12 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/robGoods/sams/config"
 )
 
-type Config struct {
-	AuthToken    string
-	BarkId       string
-	FloorId      int //1,普通商品 2,全球购保税 3,特殊订购自提 4,大件商品 5,厂家直供商品 6,特殊订购商品 7,失效商品
-	DeliveryType int //1 急速达，2， 全程配送
-	Longitude    string
-	Latitude     string
-	Deviceid     string
-	Trackinfo    string
-	PromotionId  []string
-	AddressId    string
-	PayMethod    int //支付方式
-	DeliveryFee  bool
-	CheckGoods   bool
-}
-
-type DingdongSession struct {
-	Conf               Config
+type SamsSession struct {
+	Conf               config.Config
 	Address            Address                    `json:"address"`
 	Uid                string                     `json:"uid"`
 	Capacity           Capacity                   `json:"capacity"`
@@ -44,7 +30,7 @@ type DingdongSession struct {
 	Cart               Cart                       `json:"cart"`
 }
 
-func (s *DingdongSession) InitSession(conf Config) error {
+func (s *SamsSession) InitSession(conf config.Config) error {
 	fmt.Println("########## 初始化 ##########")
 	s.Client = &http.Client{Timeout: 60 * time.Second}
 	s.Conf = conf
@@ -110,7 +96,7 @@ func (s *DingdongSession) InitSession(conf Config) error {
 	return nil
 }
 
-func (s *DingdongSession) NewRequest(method, url string, dataStr []byte) *http.Request {
+func (s *SamsSession) NewRequest(method, url string, dataStr []byte) *http.Request {
 
 	var body io.Reader = nil
 	if dataStr != nil {
@@ -124,7 +110,7 @@ func (s *DingdongSession) NewRequest(method, url string, dataStr []byte) *http.R
 	req.Header.Set("auth-token", s.Conf.AuthToken)
 	req.Header.Set("longitude", s.Conf.Longitude)
 	req.Header.Set("latitude", s.Conf.Latitude)
-	req.Header.Set("device-id", s.Conf.Deviceid)
+	req.Header.Set("device-id", s.Conf.DeviceId)
 	req.Header.Set("app-version", "5.0.47.0")
 	req.Header.Set("device-type", "ios")
 	req.Header.Set("Accept-Language", "zh-Hans-CN;q=1")

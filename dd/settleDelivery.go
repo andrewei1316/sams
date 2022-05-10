@@ -50,7 +50,7 @@ type SettleInfo struct {
 	DeliveryAddress Address        `json:"deliveryAddress"`
 }
 
-func (s *DingdongSession) GetSettleInfo(result gjson.Result) error {
+func (s *SamsSession) GetSettleInfo(result gjson.Result) error {
 	r := SettleInfo{}
 
 	for _, v := range result.Get("data.settleDelivery").Array() {
@@ -101,7 +101,7 @@ type SettleParam struct {
 	GoodsList      []Goods        `json:"goodsList"`
 }
 
-func (s *DingdongSession) CheckSettleInfo() error {
+func (s *SamsSession) CheckSettleInfo() error {
 	urlPath := "https://api-sams.walmartmobile.cn/api/v1/sams/trade/settlement/getSettleInfo"
 
 	data := SettleParam{

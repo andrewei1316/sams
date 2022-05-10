@@ -1,0 +1,15 @@
+{
+  "authToken": "",         # 必选, Sam's App HTTP头部auth-token
+  "barkId": "",            # 可选，通知用的 barkId, 可选参数
+  "floorId": 1,            # 可选，1,普通商品 2,全球购保税 3,特殊订购自提 4,大件商品 5,厂家直供商品 6,特殊订购商品 7,失效商品
+  "deliveryType": 2,       # 可选，1 急速达 2,全程配送
+  "longitude": "",         # 可选，HTTP头部longitude
+  "latitude": "",          # 可选，HTTP头部latitude
+  "deviceId": "",          # 可选，HTTP头部device-id
+  "trackInfo": "",         # 可选，HTTP头部track-info
+  "promotionId": [],       # 可选，优惠券id,多个用逗号隔开，山姆app优惠券列表接口中的'ruleId'字段
+  "addressId": "",         # 可选，地址id
+  "payMethod": 2,          # 可选，1,微信 2,支付宝
+  "deliveryFee": false,    # 可选，是否免运费下单
+  "checkGoods": true       # 可选，是否校验商品限购
+}

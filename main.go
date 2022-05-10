@@ -4,67 +4,39 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"strings"
 	"time"
 
+	"github.com/robGoods/sams/config"
 	"github.com/robGoods/sams/dd"
 )
 
 var (
-	showHelp     = flag.Bool("help", false, "show help")
-	authToken    = flag.String("authToken", "", "必选, Sam's App HTTP头部auth-token")
-	barkId       = flag.String("barkId", "", "可选，通知用的`bark` id, 可选参数")
-	floorId      = flag.Int("floorId", 1, "可选，1,普通商品 2,全球购保税 3,特殊订购自提 4,大件商品 5,厂家直供商品 6,特殊订购商品 7,失效商品")
-	deliveryType = flag.Int("deliveryType", 2, "可选，1 急速达，2， 全程配送")
-	longitude    = flag.String("longitude", "", "可选，HTTP头部longitude")
-	latitude     = flag.String("latitude", "", "可选，HTTP头部latitude")
-	deviceId     = flag.String("deviceId", "", "可选，HTTP头部device-id")
-	trackInfo    = flag.String("trackInfo", "", "可选，HTTP头部track-info")
-	promotionId  = flag.String("promotionId", "", "可选，优惠券id,多个用逗号隔开，山姆app优惠券列表接口中的'ruleId'字段")
-	addressId    = flag.String("addressId", "", "可选，地址id")
-	payMethod    = flag.Int("payMethod", 1, "可选，1,微信 2,支付宝")
-	deliveryFee  = flag.Bool("deliveryFee", false, "可选，是否免运费下单")
-	checkGoods   = flag.Bool("checkGoods", true, "可选，是否校验商品限购")
+	confName = flag.String("f", "config.json", "configuration file to load")
 )
 
 func main() {
 	flag.Parse()
-	if *showHelp {
-		flag.Usage()
+
+	conf, err := config.LoadFile(*confName)
+	if err != nil {
+		fmt.Printf("read config file error [%v]\n", err)
 		return
 	}
 
-	if *authToken == "" {
-		flag.Usage()
+	if err = conf.Validate(); err != nil {
+		fmt.Printf("validate config file error [%v]\n", err)
 		return
 	}
 
-	splitFn := func(c rune) bool {
-		return c == ','
-	}
+	run(conf)
+}
 
-	session := dd.DingdongSession{
+func run(conf config.Config) {
+	session := dd.SamsSession{
 		SettleDeliveryInfo: map[int]dd.SettleDeliveryInfo{},
 		StoreList:          map[string]dd.Store{},
 	}
-	conf := dd.Config{
-		AuthToken:    *authToken,                                //HTTP头部auth-token
-		BarkId:       *barkId,                                   //通知用的bark id，下载bark后从app界面获取, 如果不需要可以填空字符串
-		FloorId:      *floorId,                                  //1,普通商品 2,全球购保税 3,特殊订购自提 4,大件商品 5,厂家直供商品 6,特殊订购商品 7,失效商品
-		DeliveryType: *deliveryType,                             //1 急速达，2， 全程配送
-		Longitude:    *longitude,                                //HTTP头部longitude,可选参数
-		Latitude:     *latitude,                                 //HTTP头部latitude,可选参数
-		Deviceid:     *deviceId,                                 //HTTP头部device-id,可选参数
-		Trackinfo:    *trackInfo,                                //HTTP头部track-info,可选参数
-		PromotionId:  strings.FieldsFunc(*promotionId, splitFn), //优惠券id
-		AddressId:    *addressId,                                //地址
-		PayMethod:    *payMethod,                                //支付方式
-		DeliveryFee:  *deliveryFee,
-		CheckGoods:   *checkGoods,
-	}
-
 	err := session.InitSession(conf)
-
 	if err != nil {
 		fmt.Println(err)
 		return

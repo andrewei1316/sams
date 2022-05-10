@@ -56,7 +56,7 @@ type SettleDeliveryInfo struct {
 	ArrivalTimeStr       string `json:"-"`
 }
 
-func (s *DingdongSession) GetOrderInfo(result gjson.Result) error {
+func (s *SamsSession) GetOrderInfo(result gjson.Result) error {
 	s.OrderInfo = OrderInfo{
 		IsSuccess: result.Get("data.isSuccess").Bool(),
 		OrderNo:   result.Get("data.orderNo").Str,
@@ -71,7 +71,7 @@ func (s *DingdongSession) GetOrderInfo(result gjson.Result) error {
 	return nil
 }
 
-func (s *DingdongSession) CommitPay(info SettleDeliveryInfo) error {
+func (s *SamsSession) CommitPay(info SettleDeliveryInfo) error {
 	urlPath := "https://api-sams.walmartmobile.cn/api/v1/sams/trade/settlement/commitPay"
 
 	data := CommitPayPram{
@@ -112,7 +112,7 @@ func (s *DingdongSession) CommitPay(info SettleDeliveryInfo) error {
 		return err
 	}
 	req := s.NewRequest("POST", urlPath, dataStr)
-	req.Header.Set("track-info", s.Conf.Trackinfo)
+	req.Header.Set("track-info", s.Conf.TrackInfo)
 	resp, err := s.Client.Do(req)
 	if err != nil {
 		return err
